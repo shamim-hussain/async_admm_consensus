@@ -61,11 +61,11 @@ def read_json(site_id, filename):
 
 
 
-def load_data(w_i, num_worker):
+def load_data(w_i, num_worker, device):
     with np.load('mnist.npz') as dat:
         X = dat['X_train']
         
-    X = torch.from_numpy(X).float()/255
+    X = torch.from_numpy(X).float().to(device)/255
     
     if w_i == num_worker:
         return X
@@ -82,12 +82,13 @@ def load_data(w_i, num_worker):
 def run_master(self_proc_id, addrports, config):
     w_i, num_worker = self_proc_id, len(addrports)-1
     beta, S, tau, steps = config.beta, config.S, config.tau, config.steps
+    device = config.device
     
         
-    X = load_data(w_i, num_worker)
+    X = load_data(w_i, num_worker, device)
     x_dim = tuple(X.shape[1:])
     
-    master = Master(num_worker, x_dim, beta, S, tau)
+    master = Master(num_worker, x_dim, beta, S, tau, device)
     
     
     # Start the server loop as a daemon thread
@@ -121,13 +122,14 @@ def run_master(self_proc_id, addrports, config):
 
 def run_worker(self_proc_id, addrports, config):
     w_i, num_worker = self_proc_id, len(addrports)-1
-    beta = config.beta 
+    beta = config.beta
+    device = config.device
         
-    X = load_data(w_i, num_worker)
+    X = load_data(w_i, num_worker, device)
     x_dim = tuple(X.shape[1:])
     
     
-    worker = AvgWorker(X, w_i, num_worker, x_dim, beta)
+    worker = AvgWorker(X, w_i, num_worker, x_dim, beta, device)
     
     
     # Start the server loop as a daemon thread
@@ -153,6 +155,7 @@ def main():
     S = 2
     tau = 1
     steps = 50
+    device = 'cuda:0'
     
     parser = argparse.ArgumentParser()
     parser.add_argument('site_id')
@@ -160,6 +163,7 @@ def main():
     parser.add_argument('--S',type=int,default=S)
     parser.add_argument('--tau',type=int,default=tau)
     parser.add_argument('--steps',type=int,default=steps)
+    parser.add_argument('--device',default=device)
     
     config = parser.parse_args()
     
