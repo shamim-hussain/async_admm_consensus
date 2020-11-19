@@ -8,23 +8,33 @@ TIMEOUT = 0.2
 MAXTHREADS = 16
 MAXMSG=256<<10 
 
-def send_message(send_queue,addrports):
+def send_message(send_queue, addrports, wait):
     try:
         message=send_queue.popleft()
+    except:
+        return None
+    
+    try:
         message_raw = pickle.dumps(message)
 
         with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as sock:
-            sock.settimeout(TIMEOUT)
+            if not wait:
+                sock.settimeout(TIMEOUT)
+                
             sock.connect(addrports[message.receiver])
-            sock.sendall(message_raw)        
+            sock.sendall(message_raw)
+            
+            return message
     except:
-        pass
+        send_queue.appendleft(message)
+        return False
       
 
-def send_messages(send_queue,addrports,pool,wait=False):
+def send_messages(send_queue,addrports,pool,wait):
     tasks = []
     for _ in range(len(send_queue)):
-        tasks.append(pool.apply_async(send_message,args=(send_queue,addrports)))
+        tasks.append(pool.apply_async(send_message,
+                                      args=(send_queue,addrports,wait)))
     
     if wait:
         for t in tasks:
@@ -59,7 +69,7 @@ def server_loop(self_proc_id, addrports, recv_queue):
 
 
 
-def send_iter(addrports, send_queue, wait=False):
+def send_iter(addrports, send_queue, wait):
     try:
         pool = ThreadPool(processes=min(MAXTHREADS,len(addrports)))
         while True:

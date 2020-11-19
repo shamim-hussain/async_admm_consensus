@@ -27,6 +27,8 @@ class Master:
         self.send_queue = deque()
         self.recv_queue = deque()  
         
+        self.stop = False
+        
         self.initialize()
     
     def initialize(self):
@@ -76,6 +78,9 @@ class Master:
             message = Message(self.num_worker, w_i, data)
             self.send_queue.append(message)
     
+    def stop_algorithm(self):
+        self.send_messages(None)
+        self.stop = True
 
 
 
@@ -89,6 +94,8 @@ class Worker:
         
         self.send_queue = deque()
         self.recv_queue = deque()
+        
+        self.stop = False
         
         self.initialize()
         
@@ -111,9 +118,12 @@ class Worker:
             except IndexError:
                 return
             
-            self.z = m.data
-            
-            self.u_i = 1
+            if m.data is None:
+                self.stop = True
+            else:
+                self.z = m.data
+                
+                self.u_i = 1
     
     
     def update(self):

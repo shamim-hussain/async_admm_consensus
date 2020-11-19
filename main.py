@@ -82,22 +82,29 @@ def run_master(self_proc_id, addrports):
     # Start the server loop as a daemon thread
     sever_thread=threading.Thread(target=server_loop,
                                   args=(self_proc_id, addrports,
-                                        master.send_queue), 
+                                        master.recv_queue), 
                                   daemon=True)
     sever_thread.start()
     
     
     obj_vals = []
     
-    for _ in send_iter(addrports, master.send_queue, wait=False):           
+    for _ in send_iter(addrports, master.send_queue, wait=True):    
+        if master.stop:
+            print(obj_vals)
+            break
+        
         master.receive()
         if master.update():
             obj_vals.append(objective(X,master.z))
             if not master.k % 5:
                 print(f'Step {master.k} : Objective = {obj_vals[-1]:.5f}')
+                sys.stdout.flush()
         
         if master.k == steps:
-            break
+            master.stop_algorithm()
+        
+        
 
 
 
@@ -105,7 +112,6 @@ def run_worker(self_proc_id, addrports):
     num_worker = len(addrports)-1
     beta = 0.1
     device = 'cpu:0'
-    steps = 100
     w_i = self_proc_id
     
     with np.load('mnist.npz') as dat:
@@ -127,18 +133,18 @@ def run_worker(self_proc_id, addrports):
     # Start the server loop as a daemon thread
     sever_thread=threading.Thread(target=server_loop,
                                   args=(self_proc_id, addrports,
-                                        worker.send_queue), 
+                                        worker.recv_queue), 
                                   daemon=True)
     sever_thread.start()
     
     
-    for _ in send_iter(addrports, worker.send_queue, wait=False):           
-        worker.receive()
-        if worker.update():
-            pass
-        
-        if worker.k == steps:
+    for _ in send_iter(addrports, worker.send_queue, wait=True):    
+        if worker.stop:
             break
+        
+        worker.receive()
+        worker.update()
+        
 
 
 # Main function
