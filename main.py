@@ -2,12 +2,13 @@
 
 import numpy as np
 import torch
-from admm import Message, Worker, Master
+from admm import Worker, Master
 import socket
 import sys
 import threading
 import json
 from server import server_loop, send_iter
+import argparse
 #from types import SimpleNamespace
 
 
@@ -26,7 +27,7 @@ class AvgWorker(Worker):
 
 
 def objective(X,z):
-    return 0.5*((X-z)**2).mean(0).sum()
+    return 0.5*((X-z)**2).mean(0).sum().item()
 
 
 
@@ -60,23 +61,33 @@ def read_json(site_id, filename):
 
 
 
-
-
-def run_master(self_proc_id, addrports):
-    num_worker = len(addrports)-1
-    beta = 0.1
-    S = num_worker
-    tau = 1
-    device = 'cpu:0'
-    steps = 100
-    
+def load_data(w_i, num_worker):
     with np.load('mnist.npz') as dat:
         X = dat['X_train']
         
-    X = torch.from_numpy(X).float().to(device)/255
+    X = torch.from_numpy(X).float()/255
+    
+    if w_i == num_worker:
+        return X
+    else:
+        N = X.shape[0]
+        N_i = (N+num_worker-1)//num_worker
+        
+        begin = min(N_i*w_i,N)
+        end = min(N_i*(w_i+1),N)
+        X_i = X[begin:end]
+        return X_i
+
+
+def run_master(self_proc_id, addrports, config):
+    w_i, num_worker = self_proc_id, len(addrports)-1
+    beta, S, tau, steps = config.beta, config.S, config.tau, config.steps
+    
+        
+    X = load_data(w_i, num_worker)
     x_dim = tuple(X.shape[1:])
     
-    master = Master(num_worker, x_dim, beta, S, tau, device)
+    master = Master(num_worker, x_dim, beta, S, tau)
     
     
     # Start the server loop as a daemon thread
@@ -108,26 +119,15 @@ def run_master(self_proc_id, addrports):
 
 
 
-def run_worker(self_proc_id, addrports):
-    num_worker = len(addrports)-1
-    beta = 0.1
-    device = 'cpu:0'
-    w_i = self_proc_id
-    
-    with np.load('mnist.npz') as dat:
-        X = dat['X_train']
+def run_worker(self_proc_id, addrports, config):
+    w_i, num_worker = self_proc_id, len(addrports)-1
+    beta = config.beta 
         
-    X = torch.from_numpy(X).float().to(device)/255
+    X = load_data(w_i, num_worker)
     x_dim = tuple(X.shape[1:])
     
     
-    N = X.shape[0]
-    N_i = (N+num_worker-1)//num_worker
-    
-    begin = min(N_i*w_i,N)
-    end = min(N_i*(w_i+1),N)
-    X_i = X[begin:end]
-    worker = AvgWorker(X_i, w_i, num_worker, x_dim, beta, device)
+    worker = AvgWorker(X, w_i, num_worker, x_dim, beta)
     
     
     # Start the server loop as a daemon thread
@@ -149,19 +149,26 @@ def run_worker(self_proc_id, addrports):
 
 # Main function
 def main():
-    if len(sys.argv) < 2:
-        print('Warning: Site ID not provided, using system hostname.')
-        site_id=socket.gethostname()
-    else:
-        site_id=sys.argv[1]
+    beta = 10.0
+    S = 2
+    tau = 1
+    steps = 50
     
-    # Read json file
-    self_proc_id,addrports,_ = read_json(site_id,KNOWNHOSTFILE)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('site_id')
+    parser.add_argument('--beta',type=float,default=beta)
+    parser.add_argument('--S',type=int,default=S)
+    parser.add_argument('--tau',type=int,default=tau)
+    parser.add_argument('--steps',type=int,default=steps)
     
+    config = parser.parse_args()
+    
+    self_proc_id,addrports,_ = read_json(config.site_id,KNOWNHOSTFILE)
+
     if self_proc_id == len(addrports)-1:
-        run_master(self_proc_id,addrports)
+        run_master(self_proc_id,addrports,config)
     else:
-        run_worker(self_proc_id,addrports)
+        run_worker(self_proc_id,addrports,config)
 
 
 

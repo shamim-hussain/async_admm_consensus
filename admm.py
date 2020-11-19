@@ -16,7 +16,7 @@ class Message:
 class Master:
     def __init__(self, num_worker, x_dim, 
                  beta, S, tau,
-                 device):
+                 device=None):
         self.num_worker = num_worker
         self.x_dim = x_dim
         self.beta = beta
@@ -85,7 +85,7 @@ class Master:
 
 
 class Worker:
-    def __init__(self, worker_id, num_worker, x_dim, beta, device):
+    def __init__(self, worker_id, num_worker, x_dim, beta, device=None):
         self.worker_id = worker_id
         self.num_worker = num_worker
         self.x_dim = x_dim
