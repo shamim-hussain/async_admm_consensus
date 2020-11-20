@@ -1,9 +1,10 @@
-num_worker=$1
-beta=${2:-1.0}
-S=${3:-$1}
-tau=${4:-1}
-steps=${5:-50}
-device=${6:-cpu:0}
+script=$1
+num_worker=$2
+beta=${3:-1.0}
+S=${4:-$1}
+tau=${5:-1}
+steps=${6:-50}
+device=${7:-cpu:0}
 
 
 echo ----------------------------------
@@ -22,13 +23,13 @@ python knownhosts_gen.py $num_worker
 sleep 1
 
 echo Starting MASTER
-python main.py $num_worker --beta $beta --S $S --tau $tau --steps $steps --device $device &
+python script $num_worker --beta $beta --S $S --tau $tau --steps $steps --device $device &
 sleep 1
 
 for w_i in $(seq 0 $(expr $num_worker - 1))
 do
     echo Starting WORKER:$w_i
-    python main.py $w_i --beta $beta --S $S --tau $tau --steps $steps --device $device &
+    python script $w_i --beta $beta --S $S --tau $tau --steps $steps --device $device &
     sleep 1
 done
 

@@ -9,6 +9,7 @@ import threading
 import json
 from server import server_loop, send_iter
 import argparse
+import time
 #from types import SimpleNamespace
 
 
@@ -20,9 +21,11 @@ class AvgWorker(Worker):
     def __init__(self, X_i, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.X_i = X_i.to(self.device)
+
+        self.x_m = self.X_i.mean(0)
         
     def local_optim(self):
-        self.x_i = (self.X_i.mean(0)+self.beta*self.z-self.l_i)/(1+self.beta)
+        self.x_i = (self.x_m+self.beta*self.z-self.l_i)/(1+self.beta)
 
 
 class AvgMaster(Master):
@@ -30,8 +33,8 @@ class AvgMaster(Master):
         super().__init__(*args, **kwargs)
         self.X = X.to(self.device)
 
-    def objective(self):
-        return 0.5*((self.X-self.z)**2).mean(0).sum().cpu().item()
+    def objective(self, z):
+        return 0.5*((self.X-z)**2).mean(0).sum().cpu().item()
 
 
 
@@ -103,19 +106,30 @@ def run_master(self_proc_id, addrports, config):
     sever_thread.start()
     
     
-    obj_vals = []
     
+    time_vals = []
+    z_vals = torch.zeros((steps,)+x_dim, device=device)
+    
+
+    from torch.utils.tensorboard import SummaryWriter
+    writer = SummaryWriter(log_dir=f'./logs/mnist_avg/S={S} tau={tau}')
+
+    time_0 = time.time()
     for _ in send_iter(addrports, master.send_queue, wait=True):    
         if master.stop:
-            print(obj_vals)
+            print('Optimization Ended, calculating objective values.')
+            for step in range(steps):
+                obj = master.objective(z_vals[step])
+                writer.add_scalar('objective', obj, global_step=step+1, walltime=time_vals[step])
+
+            print('Done!')
+            
             break
         
         master.receive()
         if master.update():
-            obj_vals.append(master.objective())
-            if not master.k % 5:
-                print(f'Step {master.k} : Objective = {obj_vals[-1]:.5f}')
-                sys.stdout.flush()
+            z_vals[master.k-1] = master.z
+            time_vals.append(time.time()-time_0)
         
         if master.k == steps:
             master.stop_algorithm()
