@@ -1,16 +1,16 @@
 {
 	"hosts": {
 		"0": {
-			"udp_start_port": 20000,
-			"ip_address": "127.0.0.1"
+			"udp_start_port": 30000,
+			"ip_address": "localhost"
 		},
 		"1": {
-			"udp_start_port": 20001,
-			"ip_address": "127.0.0.1"
+			"udp_start_port": 30001,
+			"ip_address": "localhost"
 		},
 		"2": {
-			"udp_start_port": 20002,
-			"ip_address": "127.0.0.1"
+			"udp_start_port": 30002,
+			"ip_address": "localhost"
 		}
 	}
 }

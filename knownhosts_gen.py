@@ -3,7 +3,7 @@ import sys
 
 if __name__ == '__main__':
     num_worker = 2
-    start_port = 20000
+    start_port = 30000
     output_file = 'knownhosts.json'
     
     if len(sys.argv)>1:
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     hosts = {}
     
     for i in range(num_worker+1):
-        h = {i:{'udp_start_port':start_port+i, 'ip_address': "127.0.0.1"}}
+        h = {i:{'udp_start_port':start_port+i, 'ip_address': "localhost"}}
         hosts.update(h)
     
     data = {'hosts':hosts}
