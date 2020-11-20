@@ -17,14 +17,17 @@ echo ----------------------------------
 
 echo Generating knownhosts.json
 python knownhosts_gen.py $num_worker
+sleep 1
 
 echo Starting MASTER
 python main.py $num_worker --beta $beta --S $S --tau $tau --steps $steps --device cuda:$num_worker &
+sleep 1
 
 for w_i in $(seq 0 $(expr $num_worker - 1))
 do
     echo Starting WORKER:$w_i
     python main.py $w_i --beta $beta --S $S --tau $tau --steps $steps --device cuda:$w_i &
+    sleep 1
 done
 
 jobs
