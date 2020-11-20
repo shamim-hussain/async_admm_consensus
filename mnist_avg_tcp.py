@@ -91,6 +91,7 @@ def run_master(config):
         
         master.receive()
         if master.update():
+            if master.k == 1: time_0 = time.time()
             z_vals[master.k-1] = master.z
             time_vals.append(time.time()-time_0)
         
