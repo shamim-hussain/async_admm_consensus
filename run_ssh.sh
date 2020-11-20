@@ -28,7 +28,7 @@ sleep 1
 for w_i in $(seq 0 $(expr $num_worker - 1))
 do
     echo Starting WORKER:$w_i
-    ssh dcs188 "python $script $w_i --beta $beta --S $S --tau $tau --steps $steps --device cuda:$w_i &"
+    ssh dcs188 "cd $(pwd); python $script $w_i --beta $beta --S $S --tau $tau --steps $steps --device cuda:$w_i" &
     sleep 1
 done
 
