@@ -25,7 +25,7 @@ sleep 2
 for w_i in $(seq 0 $(expr $num_worker - 1))
 do
     echo Starting WORKER:$w_i
-    python $script $num_worker $w_i $port --beta $beta --S $S --tau $tau --steps $steps --device cuda:$(expr w_i % $num_device) &
+    python $script $num_worker $w_i $port --beta $beta --S $S --tau $tau --steps $steps --device cuda:$(expr $w_i % $num_device) &
     sleep 0.5
 done
 

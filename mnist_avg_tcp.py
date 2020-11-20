@@ -76,7 +76,7 @@ def run_master(config):
     
     time_vals = []
     z_vals = torch.zeros((steps,)+x_dim, device=device)
-    
+    print('Started computing!')
     time_0 = time.time()
     for _ in server.send_iter():    
         if master.stop:
