@@ -25,9 +25,13 @@ class AvgWorker(Worker):
         self.x_i = (self.X_i.mean(0)+self.beta*self.z-self.l_i)/(1+self.beta)
 
 
+class AvgMaster(Master):
+    def __init__(self, X, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.X = X.to(self.device)
 
-def objective(X,z):
-    return 0.5*((X-z)**2).mean(0).sum().item()
+    def objective(self):
+        return 0.5*((self.X-self.z)**2).mean(0).sum().cpu().item()
 
 
 
@@ -88,7 +92,7 @@ def run_master(self_proc_id, addrports, config):
     X = load_data(w_i, num_worker)
     x_dim = tuple(X.shape[1:])
     
-    master = Master(num_worker, x_dim, beta, S, tau, device)
+    master = AvgMaster(X, num_worker, x_dim, beta, S, tau, device)
     
     
     # Start the server loop as a daemon thread
@@ -108,7 +112,7 @@ def run_master(self_proc_id, addrports, config):
         
         master.receive()
         if master.update():
-            obj_vals.append(objective(X,master.z))
+            obj_vals.append(master.objective())
             if not master.k % 5:
                 print(f'Step {master.k} : Objective = {obj_vals[-1]:.5f}')
                 sys.stdout.flush()
