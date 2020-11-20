@@ -11,22 +11,6 @@
 		"2": {
 			"udp_start_port": 30002,
 			"ip_address": "localhost"
-		},
-		"3": {
-			"udp_start_port": 30003,
-			"ip_address": "localhost"
-		},
-		"4": {
-			"udp_start_port": 30004,
-			"ip_address": "localhost"
-		},
-		"5": {
-			"udp_start_port": 30005,
-			"ip_address": "localhost"
-		},
-		"6": {
-			"udp_start_port": 30006,
-			"ip_address": "localhost"
 		}
 	}
 }

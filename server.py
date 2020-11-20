@@ -41,12 +41,16 @@ def send_messages(send_queue,addrports,pool,wait):
             t.wait()
 
 
+def recv_message(data, recv_queue):
+    message=pickle.loads(data)
+    recv_queue.append(message)
 
 # Server loop, runs in the background
-def server_loop(self_proc_id, addrports, recv_queue):
+def server_loop(self_proc_id, addrports, recv_queue, wait=True):
     self_addr_port = addrports[self_proc_id]
     with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as sock:
-        sock.settimeout(TIMEOUT)
+        if not wait:
+            sock.settimeout(TIMEOUT)
 
         #Try to bind to specified address and port, may fail if unavailable
         try:
@@ -57,19 +61,24 @@ def server_loop(self_proc_id, addrports, recv_queue):
             sys.exit()
 
         #Enter the loop
-        while True:
-            try:                
-                # Receive request
-                data, _ = sock.recvfrom(MAXMSG)
-                message=pickle.loads(data)
-                recv_queue.append(message)
+        try:
+            pool = ThreadPool(processes=min(MAXTHREADS,len(addrports)))
+            while True:
+                try:                
+                    # Receive request
+                    data, _ = sock.recvfrom(MAXMSG)
+                    pool.apply_async(recv_message, args=(data, recv_queue))
+    
+                except socket.timeout:
+                    pass
 
-            except socket.timeout:
-                pass
+        finally:
+            pool.close()
+            pool.join()
 
 
 
-def send_iter(addrports, send_queue, wait):
+def send_iter(addrports, send_queue, wait=True):
     try:
         pool = ThreadPool(processes=min(MAXTHREADS,len(addrports)))
         while True:

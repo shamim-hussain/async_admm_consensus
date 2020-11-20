@@ -98,7 +98,7 @@ def run_master(self_proc_id, addrports, config):
     # Start the server loop as a daemon thread
     sever_thread=threading.Thread(target=server_loop,
                                   args=(self_proc_id, addrports,
-                                        master.recv_queue), 
+                                        master.recv_queue, True), 
                                   daemon=True)
     sever_thread.start()
     
