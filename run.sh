@@ -23,13 +23,13 @@ python knownhosts_gen.py $num_worker
 sleep 1
 
 echo Starting MASTER
-python script $num_worker --beta $beta --S $S --tau $tau --steps $steps --device $device &
+python $script $num_worker --beta $beta --S $S --tau $tau --steps $steps --device $device &
 sleep 1
 
 for w_i in $(seq 0 $(expr $num_worker - 1))
 do
     echo Starting WORKER:$w_i
-    python script $w_i --beta $beta --S $S --tau $tau --steps $steps --device $device &
+    python $script $w_i --beta $beta --S $S --tau $tau --steps $steps --device $device &
     sleep 1
 done
 
