@@ -19,7 +19,7 @@ KNOWNHOSTFILE='knownhosts.json'
 class AvgWorker(Worker):
     def __init__(self, X_i, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.X_i = X_i
+        self.X_i = X_i.to(self.device)
         
     def local_optim(self):
         self.x_i = (self.X_i.mean(0)+self.beta*self.z-self.l_i)/(1+self.beta)
@@ -61,11 +61,11 @@ def read_json(site_id, filename):
 
 
 
-def load_data(w_i, num_worker, device):
+def load_data(w_i, num_worker):
     with np.load('mnist.npz') as dat:
         X = dat['X_train']
         
-    X = torch.from_numpy(X).float().to(device)/255
+    X = torch.from_numpy(X).float()/255
     
     if w_i == num_worker:
         return X
@@ -85,7 +85,7 @@ def run_master(self_proc_id, addrports, config):
     device = config.device
     
         
-    X = load_data(w_i, num_worker, device)
+    X = load_data(w_i, num_worker)
     x_dim = tuple(X.shape[1:])
     
     master = Master(num_worker, x_dim, beta, S, tau, device)
@@ -124,8 +124,8 @@ def run_worker(self_proc_id, addrports, config):
     w_i, num_worker = self_proc_id, len(addrports)-1
     beta = config.beta
     device = config.device
-        
-    X = load_data(w_i, num_worker, device)
+    
+    X = load_data(w_i, num_worker)
     x_dim = tuple(X.shape[1:])
     
     

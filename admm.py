@@ -54,6 +54,7 @@ class Master:
             self.u_i[m.sender]=1
             self.t_i[m.sender]=1
             
+            m.data = m.data.to(self.device)
             self.l_i[m.sender]=m.data[0]
             self.x_i[m.sender]=m.data[1]
     
@@ -74,6 +75,7 @@ class Master:
         return True
     
     def send_messages(self, data):
+        if not data is None: data=data.cpu()
         for w_i in range(self.num_worker):
             message = Message(self.num_worker, w_i, data)
             self.send_queue.append(message)
@@ -121,6 +123,7 @@ class Worker:
             if m.data is None:
                 self.stop = True
             else:
+                m.data = m.data.to(self.device)
                 self.z = m.data
                 
                 self.u_i = 1
@@ -145,6 +148,7 @@ class Worker:
     
     
     def send_messages(self,data):
+        data = data.cpu()
         message = Message(self.worker_id, self.num_worker, data)
         self.send_queue.append(message)
     
