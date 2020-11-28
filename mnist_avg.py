@@ -3,18 +3,13 @@
 import numpy as np
 import torch
 from admm import Worker, Master
-import socket
 import sys
 import threading
 import json
-from server import server_loop, send_iter
+from tcp_server import Server, Client
 import argparse
 import time
-#from types import SimpleNamespace
 
-
-
-KNOWNHOSTFILE='knownhosts.json'
 
 
 class AvgWorker(Worker):
@@ -38,36 +33,6 @@ class AvgMaster(Master):
 
 
 
-
-
-
-
-# Read knownhosts.json
-def read_json(site_id, filename):
-    try:
-        with open(filename,'r') as fp:
-            deserialized=json.load(fp)
-    except:
-        print('Could not open json file!')
-        sys.stdout.flush()
-        sys.exit()
-    
-    addrports=[]
-    self_proc_id = 0
-    hosts_info=deserialized['hosts']
-    hosts = {}
-
-    for i, host in enumerate(sorted(hosts_info.keys())):
-        hosts[i]=host
-        if host==site_id:
-            self_proc_id = i
-        info = hosts_info[host]
-        addrports.append((info['ip_address'], info['udp_start_port']))
-    
-    return self_proc_id, addrports, hosts
-
-
-
 def load_data(w_i, num_worker):
     with np.load('mnist.npz') as dat:
         X = dat['X_train']
@@ -86,36 +51,34 @@ def load_data(w_i, num_worker):
         return X_i
 
 
-def run_master(self_proc_id, addrports, config):
-    w_i, num_worker = self_proc_id, len(addrports)-1
+def run_master(config):
+    w_i, num_worker = config.site_id, config.num_worker
     beta, S, tau, steps = config.beta, config.S, config.tau, config.steps
     device = config.device
-    
-        
+
+
     X = load_data(w_i, num_worker)
     x_dim = tuple(X.shape[1:])
     
     master = AvgMaster(X, num_worker, x_dim, beta, S, tau, device)
     
+    addrport = ('localhost',config.port)
+    server = Server(addrport, master.send_queue, master.recv_queue, num_worker)
+    server.accept()
+
+    recv_thread=threading.Thread(target=server.recv_loop,daemon=True)
+    recv_thread.start()
     
-    # Start the server loop as a daemon thread
-    sever_thread=threading.Thread(target=server_loop,
-                                  args=(self_proc_id, addrports,
-                                        master.recv_queue, True), 
-                                  daemon=True)
-    sever_thread.start()
     
     
+    from torch.utils.tensorboard import SummaryWriter
+    writer = SummaryWriter(log_dir=f'./logs/mnist_avg/S={S} tau={tau}')
     
     time_vals = []
     z_vals = torch.zeros((steps,)+x_dim, device=device)
-    
-
-    from torch.utils.tensorboard import SummaryWriter
-    writer = SummaryWriter(log_dir=f'./logs/mnist_avg/S={S} tau={tau}')
-
+    print('Started computing!')
     time_0 = time.time()
-    for _ in send_iter(addrports, master.send_queue, wait=True):    
+    for _ in server.send_iter():    
         if master.stop:
             print('Optimization Ended, calculating objective values.')
             for step in range(steps):
@@ -128,6 +91,7 @@ def run_master(self_proc_id, addrports, config):
         
         master.receive()
         if master.update():
+            if master.k == 1: time_0 = time.time()
             z_vals[master.k-1] = master.z
             time_vals.append(time.time()-time_0)
         
@@ -138,8 +102,8 @@ def run_master(self_proc_id, addrports, config):
 
 
 
-def run_worker(self_proc_id, addrports, config):
-    w_i, num_worker = self_proc_id, len(addrports)-1
+def run_worker(config):
+    w_i, num_worker = config.site_id, config.num_worker
     beta = config.beta
     device = config.device
     
@@ -149,16 +113,14 @@ def run_worker(self_proc_id, addrports, config):
     
     worker = AvgWorker(X, w_i, num_worker, x_dim, beta, device)
     
-    
-    # Start the server loop as a daemon thread
-    sever_thread=threading.Thread(target=server_loop,
-                                  args=(self_proc_id, addrports,
-                                        worker.recv_queue), 
-                                  daemon=True)
-    sever_thread.start()
+    addrport = ('localhost',config.port)
+    client = Client(addrport, worker.send_queue, worker.recv_queue, num_worker,w_i)
+
+    recv_thread=threading.Thread(target=client.recv_loop,daemon=True)
+    recv_thread.start()
     
     
-    for _ in send_iter(addrports, worker.send_queue, wait=True):    
+    for _ in client.send_iter():    
         if worker.stop:
             break
         
@@ -176,7 +138,9 @@ def main():
     device = 'cuda:0'
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('site_id')
+    parser.add_argument('num_worker',type=int)
+    parser.add_argument('site_id',type=int)
+    parser.add_argument('port',type=int)
     parser.add_argument('--beta',type=float,default=beta)
     parser.add_argument('--S',type=int,default=S)
     parser.add_argument('--tau',type=int,default=tau)
@@ -184,13 +148,11 @@ def main():
     parser.add_argument('--device',default=device)
     
     config = parser.parse_args()
-    
-    self_proc_id,addrports,_ = read_json(config.site_id,KNOWNHOSTFILE)
 
-    if self_proc_id == len(addrports)-1:
-        run_master(self_proc_id,addrports,config)
+    if config.site_id == config.num_worker:
+        run_master(config)
     else:
-        run_worker(self_proc_id,addrports,config)
+        run_worker(config)
 
 
 
