@@ -74,9 +74,12 @@ class Server:
         try:
             pool = ThreadPool(processes=min(MAXTHREADS,self.num_workers))
             while True:
-                for _ in range(len(self.send_queue)):
-                    pool.apply_async(self.send_message)
-                    
+                if len(self.send_queue)>0:
+                    tasks = []
+                    for _ in range(len(self.send_queue)):
+                        tasks.append(pool.apply_async(self.send_message))
+                    for t in tasks:
+                        t.wait()                    
                 yield None
         finally:
             pool.close()
