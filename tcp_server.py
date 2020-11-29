@@ -2,6 +2,7 @@ import pickle
 import socket
 import sys
 from multiprocessing.pool import ThreadPool
+import time
 
 
 TIMEOUT = 0.2
@@ -28,8 +29,8 @@ class Server:
         self.conns = {}
         for _ in range(self.num_workers):
             conn, _ = self.sock.accept()
-            conn.setblocking(False)
             i = pickle.loads(conn.recv(MAXMSG))
+            conn.setblocking(False)
             self.conns.update({i:conn})
             print(f'Connection {i} connected.')
     
@@ -106,20 +107,26 @@ class Server:
 
 
 class Client:
-    def __init__(self, addrport, send_queue, recv_queue, num_workers, worker_id):
+    def __init__(self, addrport, send_queue, recv_queue, num_workers, worker_id, max_retry_connect=3):
         self.addrport = addrport
         self.send_queue = send_queue
         self.recv_queue = recv_queue
         self.num_workers = num_workers
         self.worker_id = worker_id
         
-        try:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.connect(self.addrport)
-            self.sock.sendall(pickle.dumps(self.worker_id))
-            f'Connected to address {repr(self.addrport)}'
-        except:
-            raise Exception(f'Failed to connect to address {repr(self.addrport)}')
+        for tt in range(max_retry_connect+1):
+            if tt==max_retry_connect:
+                raise Exception(f'Worker:{self.worker_id} failed to connect to address {repr(self.addrport)}')
+            try:
+                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.sock.connect(self.addrport)
+                self.sock.sendall(pickle.dumps(self.worker_id))
+                print(f'Worker:{self.worker_id} connected to address {repr(self.addrport)}')
+            except:
+                print(f'Worker:{self.worker_id} failed to connect to address {repr(self.addrport)}. Retrying in 1 second...')
+                time.sleep(1)
+            else:
+                break
         
     
     def recv_message(self, data):
