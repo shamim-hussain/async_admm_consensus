@@ -29,7 +29,7 @@ class AvgMaster(Master):
         self.X = X.to(self.device)
 
     def objective(self, z):
-        return 0.5*((self.X-z)**2).mean(0).sum().cpu().item()
+        return 0.5*((self.X-z)**2).mean(0).sum()
 
 
 
