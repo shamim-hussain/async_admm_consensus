@@ -43,15 +43,11 @@ class MCWorker(Worker):
     def local_optim(self):
         try:
             self.x_i.requires_grad = True
-            #optim = torch.optim.Adam([self.x_i], lr=self.lr)
-            #optim = torch.optim.SGD([self.x_i],lr=self.lr)
             for _ in range(self.steps):
-                #optim.zero_grad()
                 step_loss = loss(self.X_i, self.Y_i, self.x_i) \
                                 + torch.sum(self.l_i*self.x_i) \
                             + 0.5*self.beta*torch.sum((self.x_i-self.z)**2)
                 step_loss.backward()
-                #optim.step()
                 self.x_i.data -= self.lr * self.x_i.grad
                 self.x_i.grad.zero_()
         finally:
