@@ -71,8 +71,9 @@ def run_master(config):
     
     
     
-    from torch.utils.tensorboard import SummaryWriter
-    writer = SummaryWriter(log_dir=f'./logs/mnist_avg/S={S} tau={tau}')
+    # For logging
+    import pandas as pd
+    log_dir=f'./logs/mnist_avg/S={S} tau={tau}'
     
     time_vals = []
     z_vals = torch.zeros((steps,)+x_dim, device=device)
@@ -81,10 +82,17 @@ def run_master(config):
     for _ in server.send_iter():    
         if master.stop:
             print('Optimization Ended, calculating objective values.')
+            data = []
             for step in range(steps):
                 obj = master.objective(z_vals[step])
-                writer.add_scalar('objective', obj, global_step=step+1, walltime=time_vals[step])
+                data.append([step+1, time_vals[step], obj.item()])
+            
+            dataframe = pd.DataFrame(data, columns=['global_step', 'wall_time',
+                                                    'objective'])
+            dataframe.to_pickle(log_dir+'/logs.pkl')
+            dataframe.to_csv(log_dir+'/logs.csv')
 
+            np.save(log_dir+'/results.npy', master.z.data.cpu().numpy())
             print('Done!')
             
             break

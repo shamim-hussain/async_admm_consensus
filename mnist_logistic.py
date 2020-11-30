@@ -127,11 +127,9 @@ def run_master(config):
     recv_thread=threading.Thread(target=server.recv_loop,daemon=True)
     recv_thread.start()
     
-    
-    
-    from torch.utils.tensorboard import SummaryWriter
+    # For logging
+    import pandas as pd
     log_dir=f'./logs/mnist_logistic/S={S} tau={tau}'
-    writer = SummaryWriter(log_dir=log_dir)
     
     time_vals = []
     z_vals = torch.zeros((steps,)+x_dim, device=device)
@@ -140,12 +138,17 @@ def run_master(config):
     for _ in server.send_iter():    
         if master.stop:
             print('Optimization Ended, calculating objective values.')
+            data = []
             for step in range(steps):
                 train_loss, test_loss = master.objective(z_vals[step])
-                writer.add_scalar('train_loss', train_loss, global_step=step+1,
-                                    walltime=time_vals[step])
-                writer.add_scalar('test_loss', test_loss, global_step=step+1,
-                                    walltime=time_vals[step])
+
+                data.append([step+1, time_vals[step], train_loss.item(), test_loss.item()])
+            
+            dataframe = pd.DataFrame(data, columns=['global_step', 'wall_time',
+                                                    'train_loss', 'test_loss'])
+            dataframe.to_pickle(log_dir+'/logs.pkl')
+            dataframe.to_csv(log_dir+'/logs.csv')
+
             w, b = W2wb(master.z)
             save_results(log_dir+'/results.npz', w=w, b=b, xm=xm, xd=xd)                        
             print('Done!')
