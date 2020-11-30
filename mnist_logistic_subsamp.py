@@ -83,8 +83,8 @@ def load_data(w_i, num_worker):
     X_test = torch.from_numpy(X_test).float()/255
     Y_test = torch.from_numpy(Y_test).long()
     
-    X = X[:,::2,::2].view(-1,MNIST_SHAPE//4)
-    X_test = X_test[:,::2,::2].view(-1,MNIST_SHAPE//4)
+    X = X[:,::2,::2].reshape(-1,MNIST_SHAPE//4)
+    X_test = X_test[:,::2,::2].reshape(-1,MNIST_SHAPE//4)
 
     xm = X.mean(0)
     xd = X.std(0) + 1e-9
