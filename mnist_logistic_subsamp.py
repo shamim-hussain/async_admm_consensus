@@ -119,7 +119,7 @@ def run_master(config):
 
 
     X, Y, X_test, Y_test, xm, xd = load_data(w_i, num_worker)
-    x_dim = (MNIST_SHAPE+1,10)
+    x_dim = (MNIST_SHAPE//4+1,10)
     
     master = MCMaster(X,Y, X_test, Y_test, num_worker, x_dim, beta, S, tau, device)
     
@@ -177,7 +177,7 @@ def run_worker(config):
     device = config.device
     
     X, Y = load_data(w_i, num_worker)
-    x_dim = (MNIST_SHAPE+1,10)
+    x_dim = (MNIST_SHAPE//4+1,10)
     
     
     worker = MCWorker(X, Y, WORKER_LR, WORKER_STEPS, 
