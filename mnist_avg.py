@@ -3,7 +3,7 @@
 import numpy as np
 import torch
 from admm import Worker, Master
-import sys
+import sys, os
 import threading
 import json
 from tcp_server import Server, Client
@@ -74,6 +74,7 @@ def run_master(config):
     # For logging
     import pandas as pd
     log_dir=f'./logs/mnist_avg/S={S} tau={tau}'
+    os.makedirs(log_dir,exist_ok=True)
     
     time_vals = []
     z_vals = torch.zeros((steps,)+x_dim, device=device)
