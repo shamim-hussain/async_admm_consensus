@@ -23,7 +23,7 @@ matplotlib.use('agg')
 
 units = {'wall_time':' (seconds)','global_step':''}
 
-xlim = {'wall_time':1.5,'global_step':200}
+xlim = {'wall_time':2,'global_step':200}
 
 
 figs = {}
@@ -49,5 +49,6 @@ figdir = folder/'Figures'
 figdir.mkdir(exist_ok=True)
 for (xl, yl), f in figs.items():
     f.tight_layout()
-    f.savefig(figdir/f'{breakname(yl)} vs. {breakname(xl)}.png')
+    f.savefig(figdir/f'{breakname(yl)} vs. {breakname(xl)}.png',dpi=600)
     f.savefig(figdir/f'{breakname(yl)} vs. {breakname(xl)}.pdf')
+    #f.savefig(figdir/f'{breakname(yl)} vs. {breakname(xl)}.svg')
