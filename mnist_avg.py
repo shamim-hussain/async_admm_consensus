@@ -16,11 +16,9 @@ class AvgWorker(Worker):
     def __init__(self, X_i, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.X_i = X_i.to(self.device)
-
-        self.x_m = self.X_i.mean(0)
         
     def local_optim(self):
-        self.x_i = (self.x_m+self.beta*self.z-self.l_i)/(1+self.beta)
+        self.x_i = (self.X_i.mean(0)+self.beta*self.z-self.l_i)/(1+self.beta)
 
 
 class AvgMaster(Master):
