@@ -21,7 +21,11 @@ breakname = lambda name: ' '.join(v[0].upper()+v[1:].lower()
 
 matplotlib.use('agg')
 
-xlim = {'wall_time':1,'global_step':200}
+units = {'wall_time':' (seconds)','global_step':''}
+
+xlim = {'wall_time':1.5,'global_step':200}
+
+
 figs = {}
 figsize=[4,3]
 for k, df in dataframes.items():
@@ -34,7 +38,9 @@ for k, df in dataframes.items():
             ax = fig.gca()
             ax.title.set_text(f'{breakname(yl)} vs. {breakname(xl)}')
             ax.plot(df[xl],df[yl], label=k)
-            ax.set_xlim(right=xlim[xl])
+            ax.set_xlim(left=0, right=xlim[xl])
+            ax.set_xlabel(breakname(xl)+units[xl])
+            ax.set_ylabel(breakname(yl))
             ax.legend()
             ax.grid(True)            
 
@@ -42,5 +48,6 @@ for k, df in dataframes.items():
 figdir = folder/'Figures'
 figdir.mkdir(exist_ok=True)
 for (xl, yl), f in figs.items():
+    f.tight_layout()
     f.savefig(figdir/f'{breakname(yl)} vs. {breakname(xl)}.png')
     f.savefig(figdir/f'{breakname(yl)} vs. {breakname(xl)}.pdf')
