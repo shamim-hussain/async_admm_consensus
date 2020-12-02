@@ -1,4 +1,4 @@
-if [ $1 == '--help' ]
+if [ $1 = '--help' ]
 then
 echo run_workers.sh script num_worker port beta S tau steps num_gpu worker_range
 else
