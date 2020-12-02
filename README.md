@@ -1,4 +1,10 @@
 # Asynchronous ADMM for Consensus Optimization
+An implementation of the Asynchronous ADMM algorithm for Consensus Optimization presented in the paper 
+
+![*Zhang, Ruiliang, and James Kwok. "Asynchronous distributed ADMM for consensus optimization." International conference on machine learning. 2014.*](http://proceedings.mlr.press/v32/zhange14.pdf)
+
+in Python using PyTorch and TCP sockets.
+
 >> For example run and more information see the [example_run.ipynb notebook](example_run.ipynb).
 
 
