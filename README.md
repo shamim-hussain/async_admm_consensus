@@ -1,7 +1,7 @@
 # Asynchronous ADMM for Consensus Optimization
 An implementation of the Asynchronous ADMM algorithm for Consensus Optimization presented in the paper 
 
-![*Zhang, Ruiliang, and James Kwok. "Asynchronous distributed ADMM for consensus optimization." International conference on machine learning. 2014.*](http://proceedings.mlr.press/v32/zhange14.pdf)
+[*Zhang, Ruiliang, and James Kwok. "Asynchronous distributed ADMM for consensus optimization." International conference on machine learning. 2014.*](http://proceedings.mlr.press/v32/zhange14.pdf)
 
 in Python using PyTorch and TCP sockets.
 
@@ -17,9 +17,8 @@ in Python using PyTorch and TCP sockets.
 
 
 >> You need to specify the process id when running these files. 
-*   A *(process id) = (number of workers)* corresponds to the master
-*   A process id from *0* to *(number of workers - 1)* are different workers
-
+>> *   A *(process id) = (number of workers)* corresponds to the master
+>> *   A process id from *0* to *(number of workers - 1)* are different workers
 >> The results are generated in the logs directory.
 
 
