@@ -11,7 +11,7 @@
 
 
 >> You need to specify the process id when running these files. 
-*   A *(process id) = (# of workers)* corresponds to the master
+*   A *(process id) = (number of workers)* corresponds to the master
 *   A process id from *0* to *(number of workers - 1)* are different workers
 
 >> The results are generated in the logs directory.
