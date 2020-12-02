@@ -13,7 +13,7 @@ import time
 import torch.nn.functional as F
 
 
-MNIST_SHAPE=28*28
+MNIST_SHAPE=14*14
 WORKER_LR=1e-2
 WORKER_STEPS=100
 
@@ -72,22 +72,19 @@ class MCMaster(Master):
 
 
 def load_data(w_i, num_worker):
-    with np.load('mnist.npz') as dat:
+    with np.load('mnist_14.npz') as dat:
         X = dat['X_train']
         Y = dat['Y_train']
         X_test = dat['X_test']
         Y_test = dat['Y_test']
         
-    X = torch.from_numpy(X).float()/255
+    X = torch.from_numpy(X).float().view(-1,MNIST_SHAPE)/255
     Y = torch.from_numpy(Y).long()
-    X_test = torch.from_numpy(X_test).float()/255
+    X_test = torch.from_numpy(X_test).float().view(-1,MNIST_SHAPE)/255
     Y_test = torch.from_numpy(Y_test).long()
     
-    X = X[:,::2,::2].reshape(-1,MNIST_SHAPE//4)
-    X_test = X_test[:,::2,::2].reshape(-1,MNIST_SHAPE//4)
-
     xm = X.mean(0)
-    xd = X.std(0) + 1e-9
+    xd = X.std(0)+1e-9
     X = (X - xm)/xd
     X_test = (X_test - xm)/xd
 
@@ -119,7 +116,7 @@ def run_master(config):
 
 
     X, Y, X_test, Y_test, xm, xd = load_data(w_i, num_worker)
-    x_dim = (MNIST_SHAPE//4+1,10)
+    x_dim = (MNIST_SHAPE+1,10)
     
     master = MCMaster(X,Y, X_test, Y_test, num_worker, x_dim, beta, S, tau, device)
     
@@ -177,7 +174,7 @@ def run_worker(config):
     device = config.device
     
     X, Y = load_data(w_i, num_worker)
-    x_dim = (MNIST_SHAPE//4+1,10)
+    x_dim = (MNIST_SHAPE+1,10)
     
     
     worker = MCWorker(X, Y, WORKER_LR, WORKER_STEPS, 
