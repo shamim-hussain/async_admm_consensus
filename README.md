@@ -5,10 +5,18 @@ An implementation of the Asynchronous ADMM algorithm for Consensus Optimization 
 
 in Python using PyTorch and TCP sockets.
 
+## Presentation and Problem Set
+
+* The recorded presentation can be found as *presentation.mp4*
+* The slide deck is contained in the *slides.pdf*
+* The problem set can be found in *Problem_Set.pdf*
+>> Solution to the problem set is available at request. Please mail [hussam4@rpi.edu](mailto:hussam4@rpi.edu).
+
+## Implementation
 >> For example run and more information see the [example_run.ipynb notebook](example_run.ipynb).
 
 
-## Files Description
+### Files Description
 
 
 
