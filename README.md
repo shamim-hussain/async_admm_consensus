@@ -7,10 +7,10 @@ in Python using PyTorch and TCP sockets.
 
 ## Presentation and Problem Set
 
-* The recorded presentation can be found as *presentation.mp4*
-* The slide deck is contained in the *slides.pdf*
-* The problem set can be found in *Problem_Set.pdf*
->> Solution to the problem set is available at request. Please mail [hussam4@rpi.edu](mailto:hussam4@rpi.edu).
+* The recorded presentation can be found as [*presentation.mp4*](presentation.mp4).
+* The slide deck is contained in the [*slides.pdf*](slides.pdf).
+* The problem set can be found in [*Problem_Set.pdf*](Problem_Set.pdf).
+* The solutions are given in [*Problem_Set__With_Solutions.pdf*](Problem_Set__With_Solutions_.pdf).
 
 ## Implementation
 >> For example run and more information see the [example_run.ipynb notebook](example_run.ipynb).
